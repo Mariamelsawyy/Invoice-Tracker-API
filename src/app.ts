@@ -1,9 +1,12 @@
 import express from "express";
 import { pool } from "./db";
+import { clientsRouter } from "./routes/clients";
 
 export const app = express();
 
 app.use(express.json());
+app.use("/clients", clientsRouter);
+
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
