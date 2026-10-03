@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db";
-import { createInvoiceSchema } from "../schemas";
+
+import { createInvoiceSchema, listInvoicesQuerySchema } from "../schemas";
 
 export const invoicesRouter = Router();
 
@@ -26,12 +27,38 @@ invoicesRouter.post("/", async (req, res) => {
  
 });
 
-invoicesRouter.get("/", async (_req, res) => {
-  try {
-    const result = await pool.query("SELECT * FROM invoices ORDER BY id");
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+const INVOICE_SELECT = `
+  SELECT id, client_id, amount, vat_rate, status, due_date, created_at,
+         ROUND(amount * (1 + vat_rate / 100), 2) AS total,
+         (status <> 'paid' AND due_date < CURRENT_DATE) AS is_overdue
+  FROM invoices`;
+
+invoicesRouter.get("/", async (req, res) => {
+  const parsed = listInvoicesQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    res.status(400).json({
+      error: "Validation failed",
+      details: parsed.error.issues.map((i) => ({
+        field: i.path.join("."),
+        message: i.message,
+      })),
+    });
+    return;
   }
+  const { status, overdue } = parsed.data;
+
+  const conditions: string[] = [];
+  const values: unknown[] = [];
+
+  if (status) {
+    values.push(status);
+    conditions.push(`status = $${values.length}`);
+  }
+  if (overdue) {
+    conditions.push("status <> 'paid' AND due_date < CURRENT_DATE");
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  const result = await pool.query(`${INVOICE_SELECT} ${where} ORDER BY id`, values);
+  res.json(result.rows);
 });
