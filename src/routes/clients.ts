@@ -1,15 +1,22 @@
 import { Router } from "express";
 import { pool } from "../db";
+import { createClientSchema } from "../schemas";
 
 export const clientsRouter = Router();
 
 clientsRouter.post("/", async (req, res) => {
-  const { name, email } = req.body ?? {};
-
-  if (typeof name !== "string" || typeof email !== "string" || !name.trim() || !email.trim()) {
-    res.status(400).json({ error: "name and email are required" });
+  const parsed = createClientSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({
+      error: "Validation failed",
+      details: parsed.error.issues.map((i) => ({
+        field: i.path.join("."),
+        message: i.message,
+      })),
+    });
     return;
-  }
+}
+const { name, email } = parsed.data;
 
   try {
     const result = await pool.query(
