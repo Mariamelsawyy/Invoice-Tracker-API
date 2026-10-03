@@ -1,11 +1,13 @@
 import express from "express";
 import { pool } from "./db";
 import { clientsRouter } from "./routes/clients";
+import { invoicesRouter } from "./routes/invoices";
 
 export const app = express();
 
 app.use(express.json());
 app.use("/clients", clientsRouter);
+app.use("/invoices",invoicesRouter);
 
 
 app.get("/health", (_req, res) => {
