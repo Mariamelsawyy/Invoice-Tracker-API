@@ -1,4 +1,5 @@
 # Invoice Tracker API
+![CI](https://github.com/Mariamelsawyy/Invoice-Tracker-API/actions/workflows/ci.yml/badge.svg)
 
 A REST API for managing clients and invoices, built with Node.js, TypeScript, Express and PostgreSQL. It's a personal learning project that models a small accounting-style backend: invoices have a VAT rate, a status, and a due date, and the API calculates totals and overdue flags.
 
