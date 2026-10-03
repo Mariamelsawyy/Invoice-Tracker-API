@@ -18,21 +18,12 @@ invoicesRouter.post("/", async (req, res) => {
   }
   const { client_id, amount, due_date, vat_rate, status } = parsed.data;
 
-  try {
-    const result = await pool.query(
-      "INSERT INTO invoices (client_id, amount, due_date, vat_rate, status) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [client_id, amount, due_date, vat_rate, status]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    const code = (err as { code?: string }).code;
-    if (code === "23503") {
-      res.status(404).json({ error: "Client not found" });
-      return;
-    }
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
-  }
+  const result = await pool.query(
+        "INSERT INTO invoices (client_id, amount, due_date, vat_rate, status) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+        [client_id, amount, due_date, vat_rate, status]
+  );
+  res.status(201).json(result.rows[0]);
+ 
 });
 
 invoicesRouter.get("/", async (_req, res) => {

@@ -15,23 +15,14 @@ clientsRouter.post("/", async (req, res) => {
       })),
     });
     return;
-}
-const { name, email } = parsed.data;
-
-  try {
-    const result = await pool.query(
-      "INSERT INTO clients (name, email) VALUES ($1, $2) RETURNING id, name, email, created_at",
-      [name.trim(), email.trim()]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    if ((err as { code?: string }).code === "23505") {
-      res.status(409).json({ error: "A client with this email already exists" });
-      return;
-    }
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
   }
+  const { name, email } = parsed.data;
+
+  const result = await pool.query(
+    "INSERT INTO clients (name, email) VALUES ($1, $2) RETURNING id, name, email, created_at",
+    [name, email]
+  );
+  res.status(201).json(result.rows[0]);
 });
 
 clientsRouter.get("/", async (_req, res) => {
