@@ -5,6 +5,5 @@ export default defineConfig({
     env: {
       DB_NAME: "invoice_test",
     },
-    fileParallelism: false,
   },
 });
