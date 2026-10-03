@@ -18,3 +18,11 @@ export const listInvoicesQuerySchema = z.object({
   status: z.enum(["draft", "sent", "paid"]).optional(),
   overdue: z.literal("true").optional(),
 });
+
+export const idParamSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
+
+export const updateStatusSchema = z.object({
+  status: z.enum(["draft", "sent", "paid"]),
+});
