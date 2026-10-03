@@ -103,3 +103,20 @@ invoicesRouter.patch("/:id/status", async (req, res) => {
   const result = await pool.query(`${INVOICE_SELECT} WHERE id = $1`, [parsedId.data.id]);
   res.json(result.rows[0]);
 });
+
+invoicesRouter.delete("/:id", async (req, res) => {
+  const parsedId = idParamSchema.safeParse(req.params);
+  if (!parsedId.success) {
+    res.status(400).json({ error: "id must be a positive integer" });
+    return;
+  }
+
+  const result = await pool.query("DELETE FROM invoices WHERE id = $1 RETURNING id", [
+    parsedId.data.id,
+  ]);
+  if (result.rows.length === 0) {
+    res.status(404).json({ error: "Invoice not found" });
+    return;
+  }
+  res.status(204).send();
+});
