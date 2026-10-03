@@ -1,30 +1,33 @@
 import { Router } from "express";
 import { pool } from "../db";
+import { createInvoiceSchema } from "../schemas";
 
 export const invoicesRouter = Router();
 
 invoicesRouter.post("/", async (req, res) => {
-  const { client_id, amount, due_date } = req.body ?? {};
-
-  if (!Number.isInteger(client_id) || typeof amount !== "number" || typeof due_date !== "string") {
-    res.status(400).json({ error: "client_id (integer), amount (number) and due_date (text) are required" });
+  const parsed = createInvoiceSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({
+      error: "Validation failed",
+      details: parsed.error.issues.map((i) => ({
+        field: i.path.join("."),
+        message: i.message,
+      })),
+    });
     return;
   }
+  const { client_id, amount, due_date, vat_rate, status } = parsed.data;
 
   try {
     const result = await pool.query(
-      "INSERT INTO invoices (client_id, amount, due_date) VALUES ($1, $2, $3) RETURNING *",
-      [client_id, amount, due_date]
+      "INSERT INTO invoices (client_id, amount, due_date, vat_rate, status) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      [client_id, amount, due_date, vat_rate, status]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
     const code = (err as { code?: string }).code;
     if (code === "23503") {
       res.status(404).json({ error: "Client not found" });
-      return;
-    }
-    if (code === "23514" || code === "22007") {
-      res.status(400).json({ error: "Invalid amount or due_date" });
       return;
     }
     console.error(err);
